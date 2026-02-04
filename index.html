@@ -1,0 +1,277 @@
+ <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- SECTION: Meta -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Autonomous Prediction Market Trading System</title>
+
+    <!-- SECTION: Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- SECTION: Styles -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <!-- SECTION: Header -->
+      <header class="app-header">
+        <div class="app-header__title-block">
+          <h1 class="app-title">Autonomous Prediction Market Trader</h1>
+          <p class="app-subtitle">
+            Simulated agent trading a Polymarket-style market using probability
+            momentum and AI news signals.
+          </p>
+        </div>
+        <div class="app-header__meta">
+          <div class="meta-badge meta-badge--live">Simulated feed</div>
+          <div class="meta-divider"></div>
+          <div class="meta-stat">
+            <span class="meta-stat__label">Scenario</span>
+            <span class="meta-stat__value">Single continuous market</span>
+          </div>
+          <div class="meta-stat">
+            <span class="meta-stat__label">Time base</span>
+            <span class="meta-stat__value">t = 0 → 100</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- SECTION: Layout -->
+      <main class="layout">
+        <!-- SECTION: Left column - Charts -->
+        <section class="panel panel--primary" aria-labelledby="market-dynamics-title">
+          <header class="panel__header">
+            <div>
+              <h2 id="market-dynamics-title" class="panel__title">
+                Market Dynamics
+              </h2>
+              <p class="panel__subtitle">
+                Market-implied probability, momentum (dP/dt), and signal
+                detection over a single simulated timeline.
+              </p>
+            </div>
+            <div class="panel__controls">
+              <div class="control-group">
+                <label class="control-label" for="speed-select">Playback</label>
+                <select id="speed-select" class="control-select">
+                  <option value="0.5">0.5×</option>
+                  <option value="1" selected>1×</option>
+                  <option value="2">2×</option>
+                  <option value="4">4×</option>
+                </select>
+              </div>
+              <button id="play-toggle" class="btn btn--primary" type="button">
+                Play
+              </button>
+              <button id="reset-btn" class="btn btn--ghost" type="button">
+                Reset
+              </button>
+            </div>
+          </header>
+
+          <div class="panel__body panel__body--stacked">
+            <!-- Probability chart -->
+            <div class="chart-card">
+              <div class="chart-card__header">
+                <h3 class="chart-card__title">Market-implied Probability</h3>
+                <p class="chart-card__meta">
+                  Agent trades on a Yes/No market; probability is derived from
+                  price.
+                </p>
+                <div class="chart-legend">
+                  <span class="legend-pill legend-pill--prob">P(market)</span>
+                  <span class="legend-pill legend-pill--position">
+                    Position size
+                  </span>
+                  <span class="legend-pill legend-pill--entry">Entry</span>
+                  <span class="legend-pill legend-pill--exit">Exit</span>
+                </div>
+              </div>
+              <canvas id="prob-chart" class="chart-canvas" aria-label="Probability time series"></canvas>
+            </div>
+
+            <!-- Momentum chart -->
+            <div class="chart-card">
+              <div class="chart-card__header">
+                <h3 class="chart-card__title">Momentum (dP/dt)</h3>
+                <p class="chart-card__meta">
+                  Rate of change of probability with statistical thresholds for
+                  separating signal from noise.
+                </p>
+                <div class="chart-legend">
+                  <span class="legend-pill legend-pill--momentum">
+                    dP/dt
+                  </span>
+                  <span class="legend-pill legend-pill--signal">
+                    Signal zone
+                  </span>
+                </div>
+              </div>
+              <canvas
+                id="momentum-chart"
+                class="chart-canvas"
+                aria-label="Momentum time series"
+              ></canvas>
+            </div>
+
+            <!-- Combined signal chart -->
+            <div class="chart-card chart-card--compact">
+              <div class="chart-card__header">
+                <h3 class="chart-card__title">Signal vs. Noise</h3>
+                <p class="chart-card__meta">
+                  Statistical filter on momentum combined with AI news relevance
+                  scores.
+                </p>
+                <div class="chart-legend">
+                  <span class="legend-pill legend-pill--sigscore">
+                    Combined signal score
+                  </span>
+                  <span class="legend-pill legend-pill--threshold">
+                    Trade threshold
+                  </span>
+                </div>
+              </div>
+              <canvas
+                id="signal-chart"
+                class="chart-canvas chart-canvas--short"
+                aria-label="Signal vs noise"
+              ></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION: Right column - Agent + News -->
+        <section class="layout__side-column">
+          <!-- Agent state -->
+          <section class="panel" aria-labelledby="agent-state-title">
+            <header class="panel__header panel__header--dense">
+              <div>
+                <h2 id="agent-state-title" class="panel__title">
+                  Agent State
+                </h2>
+                <p class="panel__subtitle">
+                  Current policy based on momentum, news, and risk constraints.
+                </p>
+              </div>
+            </header>
+            <div class="panel__body panel__body--grid">
+              <div class="stat-card">
+                <p class="stat-card__label">Time t</p>
+                <p id="state-time" class="stat-card__value">0.0</p>
+              </div>
+              <div class="stat-card">
+                <p class="stat-card__label">P(market)</p>
+                <p id="state-prob" class="stat-card__value">0.00</p>
+              </div>
+              <div class="stat-card">
+                <p class="stat-card__label">dP/dt</p>
+                <p id="state-momentum" class="stat-card__value">0.00</p>
+              </div>
+              <div class="stat-card">
+                <p class="stat-card__label">News relevance</p>
+                <p id="state-news" class="stat-card__value">0.00</p>
+              </div>
+              <div class="stat-card stat-card--wide">
+                <p class="stat-card__label">Combined signal score</p>
+                <p id="state-signal" class="stat-card__value">0.00</p>
+              </div>
+              <div class="stat-card">
+                <p class="stat-card__label">Position size</p>
+                <p id="state-position" class="stat-card__value">0</p>
+              </div>
+              <div class="stat-card">
+                <p class="stat-card__label">Risk utilization</p>
+                <p id="state-risk" class="stat-card__value">0%</p>
+              </div>
+              <div class="agent-mode-card">
+                <p class="agent-mode-card__label">Decision mode</p>
+                <p id="state-mode" class="agent-mode-card__pill">
+                  Idle / observing
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Decision timeline -->
+          <section class="panel" aria-labelledby="decision-log-title">
+            <header class="panel__header panel__header--dense">
+              <div>
+                <h2 id="decision-log-title" class="panel__title">
+                  Decision Timeline
+                </h2>
+                <p class="panel__subtitle">
+                  How the agent moves from entry to scaling, holding, and exit.
+                </p>
+              </div>
+            </header>
+            <div id="decision-log" class="panel__body decision-log">
+              <!-- Filled dynamically -->
+            </div>
+          </section>
+
+          <!-- News feed -->
+          <section class="panel" aria-labelledby="news-feed-title">
+            <header class="panel__header panel__header--dense">
+              <div>
+                <h2 id="news-feed-title" class="panel__title">
+                  AI News & Events Feed
+                </h2>
+                <p class="panel__subtitle">
+                  Simulated headlines with relevance and polarity scores.
+                </p>
+              </div>
+              <div class="panel__controls">
+                <span class="chip chip--low">Low impact</span>
+                <span class="chip chip--medium">Medium</span>
+                <span class="chip chip--high">High</span>
+              </div>
+            </header>
+            <div id="news-feed" class="panel__body news-feed">
+              <!-- Filled dynamically -->
+            </div>
+          </section>
+        </section>
+      </main>
+
+      <!-- SECTION: Explanation footer -->
+      <footer class="app-footer">
+        <div class="app-footer__column">
+          <h3 class="footer-title">How this agent trades</h3>
+          <p class="footer-text">
+            The strategy treats prediction market prices as probabilities and
+            monitors the derivative dP/dt to detect momentum. Moves that exceed
+            historical volatility bands are classified as true signals rather
+            than noise.
+          </p>
+        </div>
+        <div class="app-footer__column">
+          <h3 class="footer-title">Signal fusion</h3>
+          <p class="footer-text">
+            An AI-style module assigns relevance scores to incoming news. The
+            combined signal score is a weighted blend of momentum surprise and
+            news relevance, which then drives entry, scaling, holding, and exit
+            decisions.
+          </p>
+        </div>
+        <div class="app-footer__column">
+          <h3 class="footer-title">Risk and position sizing</h3>
+          <p class="footer-text">
+            Position size grows with signal strength but is capped by a
+            risk-budget. As signals fade or flip, the agent de-risks by
+            scaling out or fully exiting.
+          </p>
+        </div>
+      </footer>
+    </div>
+
+    <!-- SECTION: Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
